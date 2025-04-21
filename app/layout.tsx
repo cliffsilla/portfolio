@@ -1,6 +1,5 @@
 import type React from "react"
 import "@/app/globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
 import type { Metadata } from "next"
 import { Raleway, Poppins } from "next/font/google"
 
@@ -30,11 +29,9 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${raleway.variable} ${poppins.variable}`}>
+    <html lang="en" className={`${raleway.variable} ${poppins.variable} dark`}>
       <body className={poppins.className}>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-          {children}
-        </ThemeProvider>
+        {children}
       </body>
     </html>
   )

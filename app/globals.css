@@ -2,6 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Background styles for different sections */
+.bg-hero {
+  background-image: url('/bg-hero.jpg');
+}
+
+.bg-about {
+  background-image: url('/bg-about.jpg');
+}
+
+.bg-projects {
+  background-image: url('/bg-projects.jpg');
+}
+
+.bg-skills {
+  background-image: url('/bg-skills.jpg');
+}
+
+.bg-contact {
+  background-image: url('/bg-contact.jpg');
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

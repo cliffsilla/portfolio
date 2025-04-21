@@ -4,19 +4,21 @@ import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
 import { motion, useScroll, useTransform } from "framer-motion"
-import { ChevronDown, Mail, Linkedin, Github, Phone, Moon, Sun, ExternalLink, CheckCircle, AlertCircle } from "lucide-react"
+import { ChevronDown, Mail, Linkedin, Github, Phone, ExternalLink, CheckCircle, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { useTheme } from "next-themes"
 import emailjs from '@emailjs/browser'
 
+// Initialize EmailJS with your public key
+emailjs.init({
+  publicKey: 'l74XoEQhK3LzBfIAJ',
+})
+
 export default function Portfolio() {
-  const { setTheme, theme } = useTheme()
-  const [mounted, setMounted] = useState(false)
   const [activeSection, setActiveSection] = useState("hero")
   const heroRef = useRef<HTMLDivElement>(null)
   const aboutRef = useRef<HTMLDivElement>(null)
@@ -41,8 +43,6 @@ export default function Portfolio() {
   const scale = useTransform(scrollYProgress, [0, 0.2], [1, 0.95])
 
   useEffect(() => {
-    setMounted(true)
-
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -77,8 +77,8 @@ export default function Portfolio() {
     }
   }, [])
 
-  const scrollToSection = (ref: React.RefObject<HTMLDivElement>) => {
-    if (ref.current) {
+  const scrollToSection = (ref: React.RefObject<HTMLDivElement | null>) => {
+    if (ref && ref.current) {
       ref.current.scrollIntoView({ behavior: "smooth" })
     }
   }
@@ -105,19 +105,18 @@ export default function Portfolio() {
     setFormStatus('idle')
     
     try {
-      // Replace these with your actual EmailJS service, template, and user IDs
-      // You'll need to sign up at emailjs.com and create these
+      // Send email using EmailJS
       await emailjs.send(
-        'service_silla', // Replace with your EmailJS service ID
-        'template_tl7wjeg', // Replace with your EmailJS template ID
+        'service_silla', // Your EmailJS service ID
+        'template_tl7wjeg', // Your EmailJS template ID
         {
-          from_name: formData.name,
-          from_email: formData.email,
+          name: formData.name,
+          email: formData.email,
           subject: formData.subject || 'Portfolio Contact Form',
           message: formData.message,
-          to_email: 'clifford.silla@gmail.com'
-        },
-        'l74XoEQhK3LzBfIAJ' // Replace with your EmailJS public key
+          to_name: 'Clifford Silla'
+        }
+        // No need to include public key here since we initialized it above
       )
       
       // Reset form on success
@@ -131,6 +130,10 @@ export default function Portfolio() {
     } catch (error) {
       console.error('Email sending failed:', error)
       setFormStatus('error')
+      // Log detailed error information to help with debugging
+      if (error instanceof Error) {
+        console.error('Error message:', error.message)
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -223,40 +226,27 @@ export default function Portfolio() {
     "DevOps & CI/CD",
   ]
 
-  const getBackgroundStyle = () => {
+  const getBackgroundClass = () => {
     switch (activeSection) {
       case "hero":
-        return {
-          backgroundImage: "url('/bg-hero.jpg')",
-        }
+        return 'bg-hero'
       case "about":
-        return {
-          backgroundImage: "url('/bg-about.jpg')",
-        }
+        return 'bg-about'
       case "projects":
-        return {
-          backgroundImage: "url('/bg-projects.jpg')",
-        }
+        return 'bg-projects'
       case "skills":
-        return {
-          backgroundImage: "url('/bg-skills.jpg')",
-        }
+        return 'bg-skills'
       case "contact":
-        return {
-          backgroundImage: "url('/bg-contact.jpg')",
-        }
+        return 'bg-contact'
       default:
-        return {
-          backgroundImage: "url('/bg-hero.jpg')",
-        }
+        return 'bg-hero'
     }
   }
 
   return (
     <>
       <div
-        className="fixed inset-0 w-full h-full bg-cover bg-center bg-fixed transition-all duration-1000 ease-in-out"
-        style={getBackgroundStyle()}
+        className={`fixed inset-0 w-full h-full bg-cover bg-center bg-fixed transition-all duration-1000 ease-in-out ${getBackgroundClass()}`}
       >
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
       </div>
@@ -292,19 +282,10 @@ export default function Portfolio() {
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-4">
-              {mounted && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                  aria-label="Toggle theme"
-                  className="text-white hover:text-primary hover:bg-white/10"
-                >
-                  {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                </Button>
-              )}
-              <Button className="hidden md:flex bg-primary hover:bg-primary/80">Download CV</Button>
+            <div className="flex items-center">
+              <Button className="hidden md:flex bg-primary hover:bg-primary/80" onClick={() => window.open('/files/Resume - Clifford Silla.pdf', '_blank')}>
+                Download Resume
+              </Button>
             </div>
           </div>
         </nav>
@@ -354,13 +335,13 @@ export default function Portfolio() {
                 transition={{ duration: 0.6, delay: 0.3 }}
                 className="flex gap-4"
               >
-                <a
-                  href="mailto:clifford.silla@gmail.com"
-                  aria-label="Email"
+                <button
+                  onClick={() => scrollToSection(contactRef)}
+                  aria-label="Email me"
                   className="flex items-center justify-center h-8 w-8 rounded-full bg-black/50 text-white hover:text-primary hover:bg-black/70 transition-colors"
                 >
                   <Mail className="h-5 w-5" />
-                </a>
+                </button>
                 <a
                   href="https://linkedin.com/in/cliff-silla"
                   target="_blank"
@@ -566,7 +547,14 @@ export default function Portfolio() {
                     <CardHeader className="pb-2">
                       <CardTitle className="flex justify-between items-center text-white">
                         <span>{project.title}</span>
-                        <a href={project.link} className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <a 
+                          href={project.link} 
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          title={`Visit ${project.title} project`}
+                          aria-label={`Visit ${project.title} project`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
                           <ExternalLink className="h-4 w-4" />
                         </a>
                       </CardTitle>
@@ -712,12 +700,9 @@ export default function Portfolio() {
                     <div className="flex items-center justify-center h-8 w-8 rounded-full bg-black/60 text-white">
                       <Mail className="h-5 w-5" />
                     </div>
-                    <a
-                      href="mailto:clifford.silla@gmail.com"
-                      className="text-white hover:text-primary transition-colors"
-                    >
-                      clifford.silla@gmail.com
-                    </a>
+                    <span className="text-white">
+                      Email me using the contact form
+                    </span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="flex items-center justify-center h-8 w-8 rounded-full bg-black/60 text-white">
