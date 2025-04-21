@@ -24,6 +24,8 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 262 83.3% 57.8%;
     --radius: 0.75rem;
+    --scrollbar-thumb: 262 83.3% 57.8%;
+    --scrollbar-track: 217.2 32.6% 17.5%;
   }
 
   .dark {
@@ -80,4 +82,23 @@ html {
 
 .font-poppins {
   font-family: var(--font-poppins);
+}
+
+/* Custom scrollbar styling */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: hsl(var(--scrollbar-track) / 0.3);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--scrollbar-thumb) / 0.8);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--scrollbar-thumb) / 1);
 }

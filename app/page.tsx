@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
 import { motion, useScroll, useTransform } from "framer-motion"
-import { ChevronDown, Mail, Linkedin, Github, Phone, Moon, Sun, ExternalLink } from "lucide-react"
+import { ChevronDown, Mail, Linkedin, Github, Phone, Moon, Sun, ExternalLink, CheckCircle, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useTheme } from "next-themes"
+import emailjs from '@emailjs/browser'
 
 export default function Portfolio() {
   const { setTheme, theme } = useTheme()
@@ -22,6 +23,18 @@ export default function Portfolio() {
   const projectsRef = useRef<HTMLDivElement>(null)
   const skillsRef = useRef<HTMLDivElement>(null)
   const contactRef = useRef<HTMLDivElement>(null)
+  const formRef = useRef<HTMLFormElement>(null)
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    subject: "",
+    message: ""
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formStatus, setFormStatus] = useState<"idle" | "success" | "error">("idle")
+  const [showAllExperiences, setShowAllExperiences] = useState(false)
 
   const { scrollYProgress } = useScroll()
   const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0])
@@ -67,6 +80,59 @@ export default function Portfolio() {
   const scrollToSection = (ref: React.RefObject<HTMLDivElement>) => {
     if (ref.current) {
       ref.current.scrollIntoView({ behavior: "smooth" })
+    }
+  }
+
+  // Handle form input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [id]: value
+    }))
+  }
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!formData.name || !formData.email || !formData.message) {
+      alert('Please fill in all required fields')
+      return
+    }
+    
+    setIsSubmitting(true)
+    setFormStatus('idle')
+    
+    try {
+      // Replace these with your actual EmailJS service, template, and user IDs
+      // You'll need to sign up at emailjs.com and create these
+      await emailjs.send(
+        'service_silla', // Replace with your EmailJS service ID
+        'template_tl7wjeg', // Replace with your EmailJS template ID
+        {
+          from_name: formData.name,
+          from_email: formData.email,
+          subject: formData.subject || 'Portfolio Contact Form',
+          message: formData.message,
+          to_email: 'clifford.silla@gmail.com'
+        },
+        'l74XoEQhK3LzBfIAJ' // Replace with your EmailJS public key
+      )
+      
+      // Reset form on success
+      setFormData({
+        name: '',
+        email: '',
+        subject: '',
+        message: ''
+      })
+      setFormStatus('success')
+    } catch (error) {
+      console.error('Email sending failed:', error)
+      setFormStatus('error')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -413,25 +479,27 @@ export default function Portfolio() {
                     </TabsTrigger>
                   </TabsList>
                   <TabsContent value="experience" className="space-y-4 mt-4">
-                    {experiences.slice(0, 3).map((exp, index) => (
-                      <Card key={index} className="bg-white/10 border-white/5 backdrop-blur-sm">
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-lg text-white">{exp.role}</CardTitle>
-                          <CardDescription className="text-white/70">
-                            {exp.company} | {exp.period}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-sm text-white/60">{exp.description}</p>
-                        </CardContent>
-                      </Card>
-                    ))}
+                    <div className={`space-y-4 ${showAllExperiences ? 'max-h-[400px] overflow-y-auto pr-2 custom-scrollbar' : ''}`}>
+                      {(showAllExperiences ? experiences : experiences.slice(0, 3)).map((exp, index) => (
+                        <Card key={index} className="bg-white/10 border-white/5 backdrop-blur-sm">
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-lg text-white">{exp.role}</CardTitle>
+                            <CardDescription className="text-white/70">
+                              {exp.company} | {exp.period}
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-sm text-white/60">{exp.description}</p>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
                     <Button
                       variant="ghost"
                       className="w-full text-white hover:bg-white/10 hover:text-primary"
-                      onClick={() => scrollToSection(projectsRef)}
+                      onClick={() => setShowAllExperiences(!showAllExperiences)}
                     >
-                      View More
+                      {showAllExperiences ? 'Show Less' : 'View More'}
                     </Button>
                   </TabsContent>
                   <TabsContent value="education" className="space-y-4 mt-4">
@@ -716,7 +784,21 @@ export default function Portfolio() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <form className="space-y-4">
+                    <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
+                      {formStatus === 'success' && (
+                        <div className="p-3 bg-green-500/20 border border-green-500/30 rounded-md flex items-center gap-2 text-white">
+                          <CheckCircle className="h-5 w-5 text-green-500" />
+                          <span>Message sent successfully! I'll get back to you soon.</span>
+                        </div>
+                      )}
+                      
+                      {formStatus === 'error' && (
+                        <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-md flex items-center gap-2 text-white">
+                          <AlertCircle className="h-5 w-5 text-red-500" />
+                          <span>Failed to send message. Please try again later.</span>
+                        </div>
+                      )}
+                      
                       <div className="grid md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <label htmlFor="name" className="text-sm font-medium text-white">
@@ -724,8 +806,11 @@ export default function Portfolio() {
                           </label>
                           <Input
                             id="name"
+                            value={formData.name}
+                            onChange={handleInputChange}
                             placeholder="Your name"
                             className="bg-white/5 border-white/10 text-white placeholder:text-white/50 focus-visible:ring-primary"
+                            required
                           />
                         </div>
                         <div className="space-y-2">
@@ -735,8 +820,11 @@ export default function Portfolio() {
                           <Input
                             id="email"
                             type="email"
+                            value={formData.email}
+                            onChange={handleInputChange}
                             placeholder="Your email"
                             className="bg-white/5 border-white/10 text-white placeholder:text-white/50 focus-visible:ring-primary"
+                            required
                           />
                         </div>
                       </div>
@@ -746,6 +834,8 @@ export default function Portfolio() {
                         </label>
                         <Input
                           id="subject"
+                          value={formData.subject}
+                          onChange={handleInputChange}
                           placeholder="Subject"
                           className="bg-white/5 border-white/10 text-white placeholder:text-white/50 focus-visible:ring-primary"
                         />
@@ -756,13 +846,20 @@ export default function Portfolio() {
                         </label>
                         <Textarea
                           id="message"
+                          value={formData.message}
+                          onChange={handleInputChange}
                           placeholder="Your message"
                           rows={5}
                           className="bg-white/5 border-white/10 text-white placeholder:text-white/50 focus-visible:ring-primary"
+                          required
                         />
                       </div>
-                      <Button type="submit" className="w-full bg-primary hover:bg-primary/80">
-                        Send Message
+                      <Button 
+                        type="submit" 
+                        className="w-full bg-primary hover:bg-primary/80"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? 'Sending...' : 'Send Message'}
                       </Button>
                     </form>
                   </CardContent>
